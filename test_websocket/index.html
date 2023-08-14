@@ -1,0 +1,54 @@
+<!-- index.html -->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Robot Control</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.js"></script>
+</head>
+<body>
+    <h1>Robot Control</h1>
+    <button id="startBtn">Start Operation</button>
+    <div id="status"></div>
+    <div id="progressBarContainer" style="display: none;">
+        <progress id="progressBar" value="0" max="100"></progress>
+    </div>
+
+    <script>
+        const socket = io('http://localhost:8000');
+
+        socket.on('connect', () => {
+            document.getElementById('status').innerText = 'Connected to server.';
+        });
+
+        socket.on('operation_response', (data) => {
+            document.getElementById('status').innerText = data.message;
+            if (data.message === 'Operation started') {
+                document.getElementById('progressBarContainer').style.display = 'block';
+                document.getElementById('progressBar').value = 0;
+                updateProgressBar();
+            } else if (data.message === 'Operation completed') {
+                document.getElementById('progressBarContainer').style.display = 'none';
+            }
+        });
+
+        function updateProgressBar() {
+            let progress = 0;
+            const progressBar = document.getElementById('progressBar');
+            const intervalId = setInterval(() => {
+                if (progress < 100) {
+                    progress += 10;
+                    progressBar.value = progress;
+                } else {
+                    clearInterval(intervalId);
+                }
+            }, 60000);  // Update every 1 minute (60,000 milliseconds)
+        }
+
+        document.getElementById('startBtn').addEventListener('click', () => {
+            document.getElementById('status').innerText = 'Operation in progress...';
+            fetch('/start_operation/', { method: 'POST' });
+        });
+    </script>
+</body>
+</html>
